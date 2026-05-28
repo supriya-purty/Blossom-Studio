@@ -1,0 +1,128 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #fbf5ef;
+}
+
+@layer components {
+  .container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section {
+    @apply container py-16 md:py-24;
+  }
+
+  .glass-card {
+    @apply rounded-[1.1rem] border border-cocoa/10 bg-white/65 shadow-soft backdrop-blur-xl;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-full bg-blush px-7 py-3 font-semibold text-white shadow-soft transition duration-300 hover:-translate-y-0.5 hover:bg-[#dc7798];
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 rounded-full border border-cocoa/10 bg-white/80 px-7 py-3 font-semibold text-cocoa transition duration-300 hover:-translate-y-0.5 hover:bg-white;
+  }
+
+  .icon-btn {
+    @apply grid h-11 w-11 place-items-center rounded-full bg-white/60 text-cocoa shadow-sm transition hover:-translate-y-0.5 hover:bg-white;
+  }
+
+  .count-badge {
+    @apply absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-blush px-1 text-xs font-bold text-cocoa;
+  }
+
+  .nav-link {
+    @apply text-sm font-semibold transition hover:text-cocoa;
+  }
+
+  .badge {
+    @apply inline-flex w-fit items-center rounded-full bg-blush px-4 py-2 text-xs font-bold text-white;
+  }
+
+  .input {
+    @apply w-full rounded-full border border-cocoa/10 bg-white/70 px-5 py-3 text-cocoa outline-none transition focus:border-blush focus:ring-4 focus:ring-blush/20;
+  }
+
+  .product-grid {
+    @apply grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+}
+
+.hero-reference {
+  background:
+    linear-gradient(90deg, rgba(251, 245, 239, 0.25), rgba(251, 245, 239, 0.1)),
+    url("/blossom-hero-crochet-pipecleaner.png");
+  background-position: center;
+  background-size: cover;
+}
+
+.hero-panel {
+  max-width: 720px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 1.2rem;
+  background: rgba(251, 245, 239, 0.82);
+  box-shadow: 0 20px 70px rgba(45, 31, 38, 0.22);
+  padding: clamp(2rem, 5vw, 3.5rem);
+  backdrop-filter: blur(8px);
+}
+
+.category-tile {
+  position: relative;
+  display: block;
+  min-height: 500px;
+  overflow: hidden;
+  border-radius: 1.1rem;
+  box-shadow: 0 20px 70px rgba(125, 90, 80, 0.16);
+}
+
+.category-tile img {
+  height: 100%;
+  min-height: 500px;
+  width: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.category-tile:hover img {
+  transform: scale(1.05);
+}
+
+.hero-collage {
+  position: relative;
+  min-height: 560px;
+  overflow: hidden;
+  border-radius: 2.5rem;
+  box-shadow: 0 20px 70px rgba(125, 90, 80, 0.16);
+}
+
+.hero-collage > img {
+  height: 100%;
+  min-height: 560px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .hero-collage,
+  .hero-collage > img {
+    min-height: 420px;
+  }
+}
