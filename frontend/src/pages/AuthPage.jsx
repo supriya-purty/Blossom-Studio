@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const AuthPage = () => {
@@ -37,6 +37,11 @@ const AuthPage = () => {
           <input className="input" type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         </div>
         <button className="btn-primary mt-6 w-full justify-center">{mode === "login" ? "Login" : "Register"}</button>
+        {mode === "login" && (
+          <Link to="/forgot-password" className="mt-4 block text-center text-sm font-semibold text-blush">
+            Forgot password?
+          </Link>
+        )}
         <button type="button" className="mt-4 w-full text-center text-sm text-cocoa/70" onClick={() => setMode(mode === "login" ? "register" : "login")}>
           {mode === "login" ? "Need an account? Register" : "Already registered? Login"}
         </button>

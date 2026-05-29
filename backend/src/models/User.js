@@ -16,7 +16,9 @@ const userSchema = new mongoose.Schema(
     phoneNumber: String,
     role: { type: String, enum: ["customer", "admin"], default: "customer" },
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
-    recentlyViewed: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }]
+    recentlyViewed: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
+    resetPasswordToken: String,
+    resetPasswordExpires: Date
   },
   { timestamps: true }
 );
