@@ -13,7 +13,10 @@ const createTransporter = () =>
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS
-    }
+    },
+    connectionTimeout: Number(process.env.SMTP_TIMEOUT_MS || 8000),
+    greetingTimeout: Number(process.env.SMTP_TIMEOUT_MS || 8000),
+    socketTimeout: Number(process.env.SMTP_TIMEOUT_MS || 10000)
   });
 
 const sendMail = async ({ to, subject, message, replyTo }) => {
@@ -60,27 +63,29 @@ const notifyUserAndAdmin = async ({
         save: async () => {}
       };
 
-  try {
-    const userEmailSent = sendToUser
-      ? await sendMail({ to: user?.email, subject, message: userMessage || message })
-      : false;
-    const adminEmailSent = sendToAdmin
-      ? await sendMail({
-          to: adminEmail,
-          subject: `[Admin] ${subject}`,
-          message: adminMessage || message,
-          replyTo: user?.email
-        })
-      : false;
+  setImmediate(async () => {
+    try {
+      const userEmailSent = sendToUser
+        ? await sendMail({ to: user?.email, subject, message: userMessage || message })
+        : false;
+      const adminEmailSent = sendToAdmin
+        ? await sendMail({
+            to: adminEmail,
+            subject: `[Admin] ${subject}`,
+            message: adminMessage || message,
+            replyTo: user?.email
+          })
+        : false;
 
-    notification.emailSent = userEmailSent || adminEmailSent;
-    notification.status = notification.emailSent ? "sent" : "queued";
-    await notification.save();
-  } catch (error) {
-    notification.status = "failed";
-    notification.error = error.message;
-    await notification.save();
-  }
+      notification.emailSent = userEmailSent || adminEmailSent;
+      notification.status = notification.emailSent ? "sent" : "queued";
+      await notification.save();
+    } catch (error) {
+      notification.status = "failed";
+      notification.error = error.message;
+      await notification.save();
+    }
+  });
 
   return notification;
 };
