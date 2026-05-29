@@ -9,6 +9,7 @@ const Checkout = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
+  const [placingOrder, setPlacingOrder] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("UPI");
   const [shippingAddress, setShippingAddress] = useState({
     name: user?.name || "",
@@ -70,10 +71,23 @@ const Checkout = () => {
     const loaded = await loadRazorpayScript();
     if (!loaded) {
       setMessage("Razorpay could not be loaded. Please check internet connection.");
-      return;
+      return false;
     }
 
-    const { data } = await api.post("/payments/razorpay-order", { orderId: order._id });
+    let data;
+    try {
+      const response = await api.post("/payments/razorpay-order", { orderId: order._id });
+      data = response.data;
+    } catch (error) {
+      setMessage(error.response?.data?.message || "Order was saved, but Razorpay could not start. Check Razorpay keys in Render.");
+      return false;
+    }
+
+    if (!data.key || !data.razorpayOrder?.id) {
+      setMessage("Order was saved, but Razorpay key/order is missing. Check Razorpay environment variables in Render.");
+      return false;
+    }
+
     const razorpayOrder = data.razorpayOrder;
 
     const razorpay = new window.Razorpay({
@@ -92,9 +106,13 @@ const Checkout = () => {
         color: "#e27698"
       },
       handler: async (response) => {
-        await api.post("/payments/verify", response);
-        clearCart();
-        navigate("/success");
+        try {
+          await api.post("/payments/verify", response);
+          clearCart();
+          navigate("/success");
+        } catch (error) {
+          setMessage(error.response?.data?.message || "Payment completed, but verification failed. Please contact Blossom Studio.");
+        }
       },
       modal: {
         ondismiss: () => setMessage("Payment was cancelled. Your order is saved with pending payment.")
@@ -102,9 +120,11 @@ const Checkout = () => {
     });
 
     razorpay.open();
+    return true;
   };
 
   const placeOrder = async () => {
+    if (placingOrder) return;
     if (!user) {
       navigate("/login");
       return;
@@ -118,6 +138,7 @@ const Checkout = () => {
     if (!validateShippingAddress()) return;
 
     try {
+      setPlacingOrder(true);
       setMessage("");
       const { data: order } = await api.post("/orders", { shippingAddress, products: items, paymentMethod });
       if (paymentMethod === "Cash on Delivery") {
@@ -129,6 +150,8 @@ const Checkout = () => {
       await payWithRazorpay(order);
     } catch (error) {
       setMessage(error.response?.data?.message || "Order could not be placed. Please check backend.");
+    } finally {
+      setPlacingOrder(false);
     }
   };
 
@@ -166,7 +189,9 @@ const Checkout = () => {
         <aside className="glass-card h-fit p-6">
           <h2 className="font-display text-3xl">Payable Amount</h2>
           <p className="mt-4 text-4xl font-bold">Rs {total}</p>
-          <button className="btn-primary mt-6 w-full justify-center" onClick={placeOrder}>Place order</button>
+          <button className="btn-primary mt-6 w-full justify-center disabled:opacity-60" onClick={placeOrder} disabled={placingOrder}>
+            {placingOrder ? "Processing..." : "Place order"}
+          </button>
         </aside>
       </div>
     </section>

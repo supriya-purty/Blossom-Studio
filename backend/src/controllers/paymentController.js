@@ -6,6 +6,11 @@ const { notifyUserAndAdmin } = require("../utils/notificationService");
 
 const createRazorpayOrder = async (req, res, next) => {
   try {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      res.status(500);
+      throw new Error("Razorpay keys are missing. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in backend environment variables.");
+    }
+
     const { orderId } = req.body;
     const order = await Order.findById(orderId);
     if (!order) {
