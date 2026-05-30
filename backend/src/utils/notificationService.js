@@ -5,31 +5,49 @@ const Notification = require("../models/Notification");
 const hasSmtpConfig = () =>
   Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 
+const smtpTimeout = () => Number(process.env.SMTP_TIMEOUT_MS || 20000);
+
+const formatMailError = (error) => {
+  const message = error?.message || "Email could not be sent.";
+  if (/timeout|timed out|greeting never received/i.test(message)) {
+    return "Email server connection timed out. Check Gmail App Password, SMTP settings, and redeploy backend.";
+  }
+  if (/invalid login|authentication|username|password/i.test(message)) {
+    return "Email login failed. Use a Gmail App Password, not your normal Gmail password.";
+  }
+  return message;
+};
+
 const createTransporter = () =>
   nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT || 587),
     secure: Number(process.env.SMTP_PORT) === 465,
+    requireTLS: Number(process.env.SMTP_PORT || 587) === 587,
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
+      pass: process.env.SMTP_PASS.replace(/\s/g, "")
     },
-    connectionTimeout: Number(process.env.SMTP_TIMEOUT_MS || 8000),
-    greetingTimeout: Number(process.env.SMTP_TIMEOUT_MS || 8000),
-    socketTimeout: Number(process.env.SMTP_TIMEOUT_MS || 10000)
+    connectionTimeout: smtpTimeout(),
+    greetingTimeout: smtpTimeout(),
+    socketTimeout: smtpTimeout()
   });
 
 const sendMail = async ({ to, subject, message, replyTo }) => {
   if (!hasSmtpConfig() || !to) return false;
 
   const transporter = createTransporter();
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
-    to,
-    replyTo,
-    subject,
-    text: message
-  });
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to,
+      replyTo,
+      subject,
+      text: message
+    });
+  } catch (error) {
+    throw new Error(formatMailError(error));
+  }
   return true;
 };
 
