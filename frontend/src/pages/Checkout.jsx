@@ -6,7 +6,7 @@ import api from "../services/api";
 
 const Checkout = () => {
   const { items, total, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, authReady } = useAuth();
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [placingOrder, setPlacingOrder] = useState(false);
@@ -125,6 +125,11 @@ const Checkout = () => {
 
   const placeOrder = async () => {
     if (placingOrder) return;
+    if (!authReady) {
+      setMessage("Checking your login session. Please try again in a moment.");
+      return;
+    }
+
     if (!user) {
       navigate("/login");
       return;

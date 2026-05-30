@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 
 const AuthContext = createContext(null);
@@ -28,6 +28,37 @@ export const AuthProvider = ({ children }) => {
   const [adminUser, setAdminUser] = useState(() => {
     return readSavedUser("blossomAdminUser", "blossomAdminToken", "admin");
   });
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    const restoreCustomerSession = async () => {
+      const token = localStorage.getItem("blossomCustomerToken");
+      if (!token || user) {
+        setAuthReady(true);
+        return;
+      }
+
+      try {
+        const { data } = await api.get("/auth/profile");
+        const restoredUser = {
+          id: data._id || data.id,
+          name: data.name,
+          email: data.email,
+          role: data.role
+        };
+        localStorage.setItem("blossomCustomerUser", JSON.stringify(restoredUser));
+        setUser(restoredUser);
+      } catch {
+        localStorage.removeItem("blossomCustomerToken");
+        localStorage.removeItem("blossomCustomerUser");
+        setUser(null);
+      } finally {
+        setAuthReady(true);
+      }
+    };
+
+    restoreCustomerSession();
+  }, []);
 
   const login = async (email, password) => {
     const { data } = await api.post("/auth/login", { email, password });
@@ -64,8 +95,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const value = useMemo(
-    () => ({ user, adminUser, login, register, logout, logoutAdmin }),
-    [user, adminUser]
+    () => ({ user, adminUser, authReady, login, register, logout, logoutAdmin }),
+    [user, adminUser, authReady]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
