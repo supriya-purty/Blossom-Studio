@@ -7,14 +7,17 @@ const { hasSmtpConfig, sendMail } = require("../utils/notificationService");
 
 const getDashboardStats = async (req, res, next) => {
   try {
-    const [products, orders, users, payments] = await Promise.all([
+    const [products, orders, users, paidActiveOrders] = await Promise.all([
       Product.countDocuments(),
       Order.find(),
       User.countDocuments({ role: "customer" }),
-      Payment.find({ status: "captured" })
+      Order.find({
+        paymentStatus: "Paid",
+        orderStatus: { $ne: "Cancelled" }
+      }).select("totalAmount")
     ]);
 
-    const revenue = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const revenue = paidActiveOrders.reduce((sum, order) => sum + order.totalAmount, 0);
     const lowStock = await Product.find({ stock: { $lte: 5 } }).select("name stock category");
     const recentOrders = await Order.find().populate("user", "name").sort({ createdAt: -1 }).limit(6);
 

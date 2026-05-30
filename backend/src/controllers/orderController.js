@@ -1,5 +1,6 @@
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
+const Payment = require("../models/Payment");
 const Product = require("../models/Product");
 const { notifyUserAndAdmin } = require("../utils/notificationService");
 const mongoose = require("mongoose");
@@ -92,15 +93,29 @@ const getAllOrders = async (req, res, next) => {
 
 const updateOrderStatus = async (req, res, next) => {
   try {
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { orderStatus: req.body.orderStatus },
-      { new: true }
-    ).populate("user", "name email phoneNumber");
+    const order = await Order.findById(req.params.id).populate("user", "name email phoneNumber");
     if (!order) {
       res.status(404);
       throw new Error("Order not found");
     }
+
+    const previousStatus = order.orderStatus;
+    order.orderStatus = req.body.orderStatus;
+
+    if (order.orderStatus === "Cancelled" && previousStatus !== "Cancelled") {
+      order.paymentStatus = order.paymentStatus === "Paid" ? "Refunded" : "Failed";
+      await Promise.all(
+        order.products
+          .filter((item) => item.product)
+          .map((item) => Product.findByIdAndUpdate(item.product, { $inc: { stock: item.quantity } }))
+      );
+      if (order.payment) {
+        await Payment.findByIdAndUpdate(order.payment, { status: "failed" });
+      }
+    }
+
+    await order.save();
+
     await notifyUserAndAdmin({
       type: "order_status",
       user: order.user,

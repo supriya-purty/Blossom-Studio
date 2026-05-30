@@ -51,8 +51,10 @@ const AdminDashboard = () => {
   const [message, setMessage] = useState("");
 
   const revenue = useMemo(
-    () => payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
-    [payments]
+    () => orders
+      .filter((order) => order.paymentStatus === "Paid" && order.orderStatus !== "Cancelled")
+      .reduce((sum, order) => sum + Number(order.totalAmount || 0), 0),
+    [orders]
   );
 
   const loadAdminData = async () => {
